@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using JetBrains.Annotations;
 using SS14.Launcher.Utility;
 
@@ -114,6 +114,14 @@ public static class CVars
     /// Language the user selected. Null means it should be automatically selected based on system language.
     /// </summary>
     public static readonly CVarDef<string?> Language = CVarDef.Create<string?>("Language", null);
+    /// Enabled proxy?
+    /// </summary>
+    public static readonly CVarDef<bool> ProxyEnable = CVarDef.Create("ProxyEnable", false);
+
+    /// <summary>
+    /// Proxy URL.
+    /// </summary>
+    public static readonly CVarDef<string> ProxyURL = CVarDef.Create("ProxyURL", "");
 }
 
 /// <summary>
