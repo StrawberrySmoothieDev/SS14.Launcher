@@ -1,4 +1,6 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -7,7 +9,6 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog;
-using TerraFX.Interop.Windows;
 
 namespace SS14.Launcher;
 
@@ -26,8 +27,19 @@ public static class HappyEyeballsHttp
     // https://github.com/space-wizards/SS14.Launcher/issues/38
     // This is the workaround.
     //
-    // Implementation taken from https://github.com/ppy/osu-framework/pull/4191/files
-    public static HttpClient CreateHttpClient(bool autoRedirect = true, String? proxyURL = null)
+    // What's Happy Eyeballs? It makes the launcher try both IPv6 and IPv4,
+    // the former with priority, so that if IPv6 is broken your launcher still works.
+    //
+    // Implementation originally based on,
+    // rewritten as to be nigh-impossible to recognize https://github.com/ppy/osu-framework/pull/4191/files
+    //
+    // This is a simple implementation. It does not fully implement RFC 8305:
+    // * We do not separately handle parallel A and AAAA DNS requests as optimization.
+    // * We don't sort IPs as specified in RFC 6724. I can't tell if GetHostEntryAsync does.
+    // * Look I wanted to keep this simple OK?
+    //   We don't do any fancy shit like statefulness or incremental sorting
+    //   or incremental DNS updates who cares about that.
+    public static HttpClient CreateHttpClient(bool autoRedirect = true)
     {
         var handler = new SocketsHttpHandler
         {
@@ -36,25 +48,6 @@ public static class HappyEyeballsHttp
             AllowAutoRedirect = autoRedirect,
             // PooledConnectionLifetime = TimeSpan.FromSeconds(1)
         };
-
-        if (!string.IsNullOrEmpty(proxyURL))
-        {
-            WebProxy webProxy = new WebProxy(proxyURL);
-            Uri proxyURLUri = new Uri(proxyURL);
-            if (!string.IsNullOrWhiteSpace(proxyURLUri.UserInfo))
-            {
-                string[] credentials = proxyURLUri.UserInfo.Split(new[] { ':' });
-                
-                if (credentials.Length > 1)
-                {
-                    webProxy.Credentials = new NetworkCredential(
-                        userName: credentials[0],
-                        password: credentials[1]);
-                }
-            }
-            
-            handler.Proxy = webProxy;
-        }
 
         return new HttpClient(handler);
     }
